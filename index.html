@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LINE 考勤打卡系統 (1-Click GPS)</title>
+  <style>
+    :root {
+      --primary: #06C755;
+      --danger: #FF4757;
+      --bg: #0F172A;
+      --card-bg: #1E293B;
+      --text: #F8FAFC;
+      --subtext: #94A3B8;
+    }
+    body {
+      margin: 0;
+      padding: 20px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      box-sizing: border-box;
+    }
+    .card {
+      background: var(--card-bg);
+      width: 100%;
+      max-width: 400px;
+      border-radius: 20px;
+      padding: 28px 24px;
+      box-shadow: 0 12px 32px rgba(0,0,0,0.4);
+      text-align: center;
+      box-sizing: border-box;
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+    .avatar {
+      width: 88px;
+      height: 88px;
+      border-radius: 50%;
+      margin-bottom: 14px;
+      border: 3px solid var(--primary);
+      box-shadow: 0 0 16px rgba(6, 199, 85, 0.4);
+    }
+    .user-name {
+      font-size: 22px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+    .user-id {
+      font-size: 12px;
+      color: var(--subtext);
+      word-break: break-all;
+      margin-bottom: 24px;
+    }
+    .status-box {
+      background: rgba(15, 23, 42, 0.6);
+      border-radius: 12px;
+      padding: 16px;
+      font-size: 14px;
+      margin-bottom: 24px;
+      color: #38BDF8;
+      text-align: left;
+      line-height: 1.5;
+      border: 1px solid rgba(56, 189, 248, 0.2);
+      white-space: pre-wrap;
+    }
+    .error-box {
+      color: #F87171;
+      border-color: rgba(248, 113, 113, 0.3);
+      background: rgba(239, 68, 68, 0.1);
+    }
+    .success-box {
+      color: #4ADE80;
+      border-color: rgba(74, 222, 128, 0.3);
+      background: rgba(34, 197, 94, 0.1);
+    }
+    .btn {
+      display: block;
+      width: 100%;
+      padding: 18px 0;
+      font-size: 19px;
+      font-weight: bold;
+      border: none;
+      border-radius: 14px;
+      color: white;
+      cursor: pointer;
+      transition: transform 0.1s, opacity 0.2s, box-shadow 0.2s;
+      margin-bottom: 14px;
+      box-sizing: border-box;
+    }
+    .btn:active {
+      transform: scale(0.97);
+    }
+    .btn-in {
+      background: linear-gradient(135deg, #06C755, #059669);
+      box-shadow: 0 4px 16px rgba(6, 199, 85, 0.3);
+    }
+    .btn-out {
+      background: linear-gradient(135deg, #FF4757, #DC2626);
+      box-shadow: 0 4px 16px rgba(255, 71, 87, 0.3);
+    }
+    .btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+    .gps-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(255,255,255,0.06);
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      color: #94A3B8;
+      margin-bottom: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <img id="avatar" class="avatar" src="https://via.placeholder.com/88/06C755/FFFFFF?text=LINE" alt="Avatar">
+    <div id="userName" class="user-name">連線中...</div>
+    <div id="userId" class="user-id">正在驗證 LINE 身份...</div>
+
+    <div class="gps-badge">
+      <span>📡 1-Click 自動 GPS 定位發送</span>
+    </div>
+
+    <div id="statusBox" class="status-box">請稍候，系統正在透過 LIFF 初始化身份資訊...</div>
+
+    <div id="actionButtons" style="display:none;">
+      <button id="btnIn" class="btn btn-in" onclick="handlePunch('上班')">📍 上班打卡</button>
+      <button id="btnOut" class="btn btn-out" onclick="handlePunch('下班')">🔴 下班打卡</button>
+    </div>
+  </div>
+
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <script>
+    var LIFF_ID = '2010885295-Rao11tsR';
+    var API_URL = 'https://script.google.com/macros/s/AKfycbwKB6qrxsHu1kiyvwCNND3p0xFXuZ_vmnoQ8gtnxNqU4UqWm2yKkArisCWmZpOnmz2i/exec';
+    var currentUser = null;
+
+    function setStatus(msg, type) {
+      var box = document.getElementById('statusBox');
+      box.textContent = msg;
+      box.className = 'status-box';
+      if (type === 'error') box.classList.add('error-box');
+      if (type === 'success') box.classList.add('success-box');
+    }
+
+    function initLiff() {
+      if (typeof liff === 'undefined') {
+        setStatus('❌ LIFF SDK 載入失敗，請確認網路連線。', 'error');
+        return;
+      }
+
+      liff.init({ liffId: LIFF_ID })
+        .then(function() {
+          if (!liff.isLoggedIn()) {
+            liff.login();
+            return;
+          }
+
+          var dec = liff.getDecodedIDToken();
+          if (dec && dec.sub) {
+            currentUser = {
+              userId: dec.sub,
+              name: dec.name || 'LINE 使用者',
+              picture: dec.picture || 'https://via.placeholder.com/88/06C755/FFFFFF?text=LINE'
+            };
+            renderUser();
+          } else {
+            liff.getProfile().then(function(profile) {
+              currentUser = {
+                userId: profile.userId,
+                name: profile.displayName,
+                picture: profile.pictureUrl
+              };
+              renderUser();
+            }).catch(function(err) {
+              setStatus('❌ 取得用戶 profile 失敗: ' + err.message, 'error');
+            });
+          }
+        })
+        .catch(function(err) {
+          setStatus('❌ LIFF 初始化失敗: ' + err.message, 'error');
+        });
+    }
+
+    function renderUser() {
+      document.getElementById('userName').textContent = currentUser.name;
+      document.getElementById('userId').textContent = 'User ID: ' + currentUser.userId;
+      if (currentUser.picture) {
+        document.getElementById('avatar').src = currentUser.picture;
+      }
+      setStatus('✅ LINE 身份驗證完成！\n點擊下方按鈕即可 1 秒完成 GPS 打卡：', 'success');
+      document.getElementById('actionButtons').style.display = 'block';
+    }
+
+    function handlePunch(type) {
+      if (!currentUser || !currentUser.userId) {
+        alert('尚未取得 LINE 身份，請重試');
+        return;
+      }
+
+      document.getElementById('btnIn').disabled = true;
+      document.getElementById('btnOut').disabled = true;
+      setStatus('📡 正在讀取 GPS 經緯度定位中...', '');
+
+      if ("geolocation" in navigator) {
+        navigator.geolocation.getCurrentPosition(
+          function(pos) {
+            var lat = pos.coords.latitude;
+            var lng = pos.coords.longitude;
+            var acc = pos.coords.accuracy;
+            sendPunchData(type, lat, lng, acc);
+          },
+          function(err) {
+            // If GPS denied, submit punch without lat/lng but alert user
+            console.warn("GPS error: " + err.message);
+            sendPunchData(type, "", "", "");
+          },
+          { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
+        );
+      } else {
+        sendPunchData(type, "", "", "");
+      }
+    }
+
+    function sendPunchData(type, lat, lng, acc) {
+      setStatus('⏳ 正在寫入 Google Sheet 試算表...', '');
+
+      var payload = {
+        userId: currentUser.userId,
+        userName: currentUser.name,
+        punchType: type,
+        latitude: lat,
+        longitude: lng,
+        accuracy: acc
+      };
+
+      fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify(payload)
+      })
+      .then(function(res) { return res.json(); })
+      .then(function(res) {
+        document.getElementById('btnIn').disabled = false;
+        document.getElementById('btnOut').disabled = false;
+
+        if (res.status === 'success') {
+          var gpsMsg = lat ? ('\nGPS: ' + Number(lat).toFixed(4) + ', ' + Number(lng).toFixed(4)) : '\n(無 GPS)';
+          setStatus('🎉 ' + type + '打卡成功！\n姓名: ' + res.userName + '\n時間: ' + res.punchTime + gpsMsg, 'success');
+        } else {
+          setStatus('❌ 打卡失敗: ' + (res.message || '未知錯誤'), 'error');
+        }
+      })
+      .catch(function(err) {
+        document.getElementById('btnIn').disabled = false;
+        document.getElementById('btnOut').disabled = false;
+        setStatus('❌ 網路請求失敗: ' + err.message, 'error');
+      });
+    }
+
+    window.onload = initLiff;
+  </script>
+</body>
+</html>
