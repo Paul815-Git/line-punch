@@ -135,7 +135,7 @@
 </head>
 <body>
   <div class="card">
-    <div class="version-tag">v9.0.0 最新版</div>
+    <div class="version-tag">v10.0.0 正式版</div>
     <img id="avatar" class="avatar" src="https://via.placeholder.com/88/06C755/FFFFFF?text=LINE" alt="Avatar">
     <div id="userName" class="user-name">連線中...</div>
     <div id="userId" class="user-id">正在驗證 LINE 身份...</div>
@@ -155,7 +155,7 @@
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <script>
     var LIFF_ID = '2010885295-Rao11tsR';
-    var API_URL = 'https://script.google.com/macros/s/AKfycbybJdBpRSCsanEr5vnFjUFUSpfvNzdMc6nX7gp1HCdnCvWtAKCv64rRCHhhzx2R0Jty/exec';
+    var API_URL = 'https://script.google.com/macros/s/AKfycbwsjmJdMBlEqQ85E4AnemT9H3FREtN8VGxP363dywxtHI1mGfYZjMAE3nXRiK6gNahu/exec';
     var currentUser = null;
 
     function setStatus(msg, type) {
@@ -211,7 +211,7 @@
       if (currentUser.picture) {
         document.getElementById('avatar').src = currentUser.picture;
       }
-      setStatus('✅ LINE 身份驗證完成！(v9.0.0)\n點擊下方按鈕即可 1 秒完成 GPS 打卡：', 'success');
+      setStatus('✅ LINE 身份驗證完成！(v10.0.0)\n點擊下方按鈕即可 1 秒完成 GPS 打卡：', 'success');
       document.getElementById('actionButtons').style.display = 'block';
     }
 
@@ -245,7 +245,7 @@
     }
 
     function sendPunchData(type, lat, lng, acc) {
-      setStatus('⏳ 正在寫入 Google Sheet 試算表 (v9.0.0 API)...', '');
+      setStatus('⏳ 正在寫入 Google Sheet 試算表 (v10.0.0 API)...', '');
 
       var formData = new URLSearchParams();
       formData.append('userId', currentUser.userId);
