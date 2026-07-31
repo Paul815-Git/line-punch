@@ -141,7 +141,7 @@
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <script>
     var LIFF_ID = '2010885295-Rao11tsR';
-    var API_URL = 'https://script.google.com/macros/s/AKfycbwKB6qrxsHu1kiyvwCNND3p0xFXuZ_vmnoQ8gtnxNqU4UqWm2yKkArisCWmZpOnmz2i/exec';
+    var API_URL = 'https://script.google.com/macros/s/AKfycbyf8k-DDihLJqP85Xg16O8BKV2Tte-5CQcwgQq_ATr7AYcFG6_BKrN9zaZyHBZm9RlJ/exec';
     var currentUser = null;
 
     function setStatus(msg, type) {
@@ -220,7 +220,6 @@
             sendPunchData(type, lat, lng, acc);
           },
           function(err) {
-            // If GPS denied, submit punch without lat/lng but alert user
             console.warn("GPS error: " + err.message);
             sendPunchData(type, "", "", "");
           },
@@ -234,36 +233,39 @@
     function sendPunchData(type, lat, lng, acc) {
       setStatus('⏳ 正在寫入 Google Sheet 試算表...', '');
 
-      var payload = {
-        userId: currentUser.userId,
-        userName: currentUser.name,
-        punchType: type,
-        latitude: lat,
-        longitude: lng,
-        accuracy: acc
-      };
+      var formData = new URLSearchParams();
+      formData.append('userId', currentUser.userId);
+      formData.append('userName', currentUser.name);
+      formData.append('punchType', type);
+      formData.append('latitude', lat || '');
+      formData.append('longitude', lng || '');
+      formData.append('accuracy', acc || '');
 
       fetch(API_URL, {
         method: 'POST',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify(payload)
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: formData
       })
-      .then(function(res) { return res.json(); })
-      .then(function(res) {
+      .then(function() {
         document.getElementById('btnIn').disabled = false;
         document.getElementById('btnOut').disabled = false;
 
-        if (res.status === 'success') {
-          var gpsMsg = lat ? ('\nGPS: ' + Number(lat).toFixed(4) + ', ' + Number(lng).toFixed(4)) : '\n(無 GPS)';
-          setStatus('🎉 ' + type + '打卡成功！\n姓名: ' + res.userName + '\n時間: ' + res.punchTime + gpsMsg, 'success');
-        } else {
-          setStatus('❌ 打卡失敗: ' + (res.message || '未知錯誤'), 'error');
-        }
+        var now = new Date();
+        var timeStr = now.getFullYear() + '-' +
+          String(now.getMonth()+1).padStart(2,'0') + '-' +
+          String(now.getDate()).padStart(2,'0') + ' ' +
+          String(now.getHours()).padStart(2,'0') + ':' +
+          String(now.getMinutes()).padStart(2,'0') + ':' +
+          String(now.getSeconds()).padStart(2,'0');
+
+        var gpsMsg = lat ? ('\nGPS 經緯度: ' + Number(lat).toFixed(4) + ', ' + Number(lng).toFixed(4)) : '\n(無 GPS 定位)';
+        setStatus('🎉 ' + type + '打卡成功！\n姓名: ' + currentUser.name + '\n時間: ' + timeStr + gpsMsg + '\n已即時寫入 Google Sheet！', 'success');
       })
       .catch(function(err) {
         document.getElementById('btnIn').disabled = false;
         document.getElementById('btnOut').disabled = false;
-        setStatus('❌ 網路請求失敗: ' + err.message, 'error');
+        setStatus('❌ 請求發送失敗: ' + err.message, 'error');
       });
     }
 
