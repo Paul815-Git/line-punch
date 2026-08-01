@@ -123,9 +123,10 @@
       box-shadow: 0 4px 16px rgba(255, 71, 87, 0.3);
     }
     .btn:disabled {
-      opacity: 0.4;
+      opacity: 0.35;
       cursor: not-allowed;
       box-shadow: none;
+      filter: grayscale(80%);
     }
   </style>
 </head>
@@ -140,7 +141,7 @@
       ⛔ 請改用手機 LINE App 開啟本頁面打卡。
     </div>
 
-    <div id="statusBox" class="status-box">請稍候，系統正在透過 LIFF 初始化身份資訊...</div>
+    <div id="statusBox" class="status-box">請稍候，系統正在初始化身份資訊...</div>
 
     <div id="actionButtons" style="display:none;">
       <button id="btnIn" class="btn btn-in" onclick="handlePunch('上班')">📍 上班打卡</button>
@@ -153,6 +154,7 @@
     var LIFF_ID = '2010885295-Rao11tsR';
     var API_URL = 'https://script.google.com/macros/s/AKfycbwsjmJdMBlEqQ85E4AnemT9H3FREtN8VGxP363dywxtHI1mGfYZjMAE3nXRiK6gNahu/exec';
     var currentUser = null;
+    var lastPunchState = null;
 
     function isMobileDevice() {
       return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
@@ -164,6 +166,25 @@
       box.className = 'status-box';
       if (type === 'error') box.classList.add('error-box');
       if (type === 'success') box.classList.add('success-box');
+    }
+
+    function updateButtonStates(lastState) {
+      var btnIn = document.getElementById('btnIn');
+      var btnOut = document.getElementById('btnOut');
+
+      if (lastState === '上班') {
+        // Punched In -> Disable Clock In, Enable Clock Out
+        btnIn.disabled = true;
+        btnOut.disabled = false;
+      } else if (lastState === '下班') {
+        // Punched Out -> Enable Clock In, Disable Clock Out
+        btnIn.disabled = false;
+        btnOut.disabled = true;
+      } else {
+        // Initial state -> Enable Clock In, Disable Clock Out
+        btnIn.disabled = false;
+        btnOut.disabled = true;
+      }
     }
 
     function initLiff() {
@@ -211,6 +232,31 @@
       document.getElementById('actionButtons').style.display = 'none';
     }
 
+    function syncLastPunchState() {
+      if (!currentUser || !currentUser.userId) return;
+
+      // 1. Read local cache first for instant UX
+      var cached = localStorage.getItem('last_punch_' + currentUser.userId);
+      if (cached) {
+        lastPunchState = cached;
+        updateButtonStates(cached);
+      }
+
+      // 2. Query backend sheet for ground truth
+      fetch(API_URL + '?userId=' + encodeURIComponent(currentUser.userId))
+        .then(function(res) { return res.json(); })
+        .then(function(data) {
+          if (data && data.lastPunchType) {
+            lastPunchState = data.lastPunchType;
+            localStorage.setItem('last_punch_' + currentUser.userId, data.lastPunchType);
+            updateButtonStates(data.lastPunchType);
+          }
+        })
+        .catch(function(err) {
+          console.warn("Sync state error: ", err);
+        });
+    }
+
     function renderUser() {
       document.getElementById('userName').textContent = currentUser.name;
       if (currentUser.picture) {
@@ -227,8 +273,11 @@
         // Mobile Device Allowed
         document.getElementById('desktopLockBanner').style.display = 'none';
         document.getElementById('statusBox').style.display = 'block';
-        setStatus('✅ LINE 身份驗證完成！\n點擊下方按鈕即可 1 秒完成 GPS 打卡：', 'success');
+        setStatus('✅ LINE 身份驗證完成！', 'success');
         document.getElementById('actionButtons').style.display = 'block';
+
+        // Sync last punch state to control button locking
+        syncLastPunchState();
       }
     }
 
@@ -246,7 +295,7 @@
 
       document.getElementById('btnIn').disabled = true;
       document.getElementById('btnOut').disabled = true;
-      setStatus('📡 正在讀取 GPS 經緯度定位中...', '');
+      setStatus('📡 正在定位中...', '');
 
       if ("geolocation" in navigator) {
         navigator.geolocation.getCurrentPosition(
@@ -268,7 +317,7 @@
     }
 
     function sendPunchData(type, lat, lng, acc) {
-      setStatus('⏳ 正在寫入 Google Sheet 試算表...', '');
+      setStatus('⏳ 請稍候...', '');
 
       var formData = new URLSearchParams();
       formData.append('userId', currentUser.userId);
@@ -286,8 +335,10 @@
         body: formData
       })
       .then(function() {
-        document.getElementById('btnIn').disabled = false;
-        document.getElementById('btnOut').disabled = false;
+        // Save state locally & update buttons
+        lastPunchState = type;
+        localStorage.setItem('last_punch_' + currentUser.userId, type);
+        updateButtonStates(type);
 
         var now = new Date();
         var timeStr = now.getFullYear() + '-' +
@@ -297,12 +348,10 @@
           String(now.getMinutes()).padStart(2,'0') + ':' +
           String(now.getSeconds()).padStart(2,'0');
 
-        var gpsMsg = lat ? ('\nGPS 經緯度: ' + Number(lat).toFixed(4) + ', ' + Number(lng).toFixed(4)) : '\n(無 GPS 定位)';
-        setStatus('🎉 ' + type + '打卡成功！\n姓名: ' + currentUser.name + '\n時間: ' + timeStr + gpsMsg + '\n已即時寫入 Google Sheet！', 'success');
+        setStatus(type + '打卡成功！\n姓名: ' + currentUser.name + '\n時間: ' + timeStr, 'success');
       })
       .catch(function(err) {
-        document.getElementById('btnIn').disabled = false;
-        document.getElementById('btnOut').disabled = false;
+        updateButtonStates(lastPunchState);
         setStatus('❌ 請求發送失敗: ' + err.message, 'error');
       });
     }
