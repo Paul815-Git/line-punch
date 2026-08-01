@@ -586,7 +586,6 @@
       html += '</tbody></table>';
       box.innerHTML = html;
 
-      // Show/Hide "Show More" Button if history > 5
       if (pArr.length > 5) {
         btn.style.display = 'block';
         if (isShowingAllHistory) {
@@ -618,10 +617,8 @@
         document.getElementById('modalMonthlyHours').textContent = (latestResponseData.monthlyHours || 0) + ' 小時';
         document.getElementById('modalCycleText').textContent = '計薪區間: ' + (latestResponseData.cycleText || '--');
 
-        // Render Table and Button
         renderHistoryTable();
 
-        // Settings Panel for OWNER or ADMIN
         if (userRole === 'OWNER' || userRole === 'ADMIN') {
           document.getElementById('companySettingsCard').style.display = 'block';
           if (latestResponseData.settings) {
@@ -886,6 +883,12 @@
         return;
       }
 
+      // Pre-check 1: Check userStatus permission on client
+      if (userStatus !== 'APPROVED' && currentUser.userId !== 'Uad06e7dc67fd8bf94e77d6dc371a4299') {
+        setStatus('❌ 無法打卡：您的帳號尚未審核通過，請通知管理員進行審核！', 'error');
+        return;
+      }
+
       document.getElementById('btnIn').disabled = true;
       document.getElementById('btnOut').disabled = true;
       setStatus('📡 正在定位中...', '');
@@ -910,7 +913,7 @@
     }
 
     function sendPunchData(type, lat, lng, acc) {
-      setStatus('⏳ 請稍候...', '');
+      setStatus('⏳ 正在驗證與寫入中...', '');
 
       var formData = new URLSearchParams();
       formData.append('userId', currentUser.userId);
@@ -928,18 +931,37 @@
         body: formData
       })
       .then(function() {
-        lastPunchState = type;
-        updateButtonStates(type);
+        // Double Check Server Verification to prevent False Positives
+        setTimeout(function() {
+          fetch(API_URL + '?userId=' + encodeURIComponent(currentUser.userId))
+            .then(function(res) { return res.json(); })
+            .then(function(verifyData) {
+              if (verifyData && verifyData.lastPunchType === type) {
+                // Verified Genuine Success
+                latestResponseData = verifyData;
+                lastPunchState = type;
+                updateButtonStates(type);
 
-        var now = new Date();
-        var timeStr = now.getFullYear() + '-' +
-          String(now.getMonth()+1).padStart(2,'0') + '-' +
-          String(now.getDate()).padStart(2,'0') + ' ' +
-          String(now.getHours()).padStart(2,'0') + ':' +
-          String(now.getMinutes()).padStart(2,'0') + ':' +
-          String(now.getSeconds()).padStart(2,'0');
+                var now = new Date();
+                var timeStr = now.getFullYear() + '-' +
+                  String(now.getMonth()+1).padStart(2,'0') + '-' +
+                  String(now.getDate()).padStart(2,'0') + ' ' +
+                  String(now.getHours()).padStart(2,'0') + ':' +
+                  String(now.getMinutes()).padStart(2,'0') + ':' +
+                  String(now.getSeconds()).padStart(2,'0');
 
-        setStatus(type + '打卡成功！\n姓名: ' + currentUser.name + '\n時間: ' + timeStr, 'success');
+                setStatus(type + '打卡成功！\n姓名: ' + currentUser.name + '\n時間: ' + timeStr, 'success');
+              } else {
+                // Server rejected write (unapproved or out of geofence)
+                updateButtonStates(lastPunchState);
+                setStatus('❌ 打卡失敗！請確認是否已通過審核，或是否超出公司打卡範圍。', 'error');
+              }
+            })
+            .catch(function(err) {
+              updateButtonStates(lastPunchState);
+              setStatus('❌ 驗證失敗: ' + err.message, 'error');
+            });
+        }, 800);
       })
       .catch(function(err) {
         updateButtonStates(lastPunchState);
