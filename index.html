@@ -3,7 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>LINE 考勤打卡系統 (1-Click GPS)</title>
+  <title>LINE打卡</title>
+  <meta name="description" content="LINE打卡">
+  <meta property="og:title" content="LINE打卡">
+  <meta property="og:description" content="LINE打卡">
   <style>
     :root {
       --primary: #06C755;
@@ -193,7 +196,7 @@
 </head>
 <body>
   <div class="card">
-    <div class="version-tag">v2.1 審核防護版</div>
+    <div class="version-tag">v2.1</div>
     <img id="avatar" class="avatar" src="https://via.placeholder.com/88/06C755/FFFFFF?text=LINE" alt="Avatar">
     <div id="userName" class="user-name">連線中...</div>
 
@@ -215,12 +218,10 @@
       <button id="btnOut" class="btn btn-out" onclick="handlePunch('下班')">🔴 下班打卡</button>
     </div>
 
-    <!-- Admin Review Panel -->
+    <!-- Admin Review Panel (Dynamic Show/Hide) -->
     <div id="adminSection" class="admin-panel" style="display:none;">
       <div class="admin-title">⚙️ 管理員審核專區 (待審核同仁)</div>
-      <div id="pendingUsersList">
-        <div style="font-size: 12px; color: #94A3B8;">正在讀取待審核名單...</div>
-      </div>
+      <div id="pendingUsersList"></div>
     </div>
   </div>
 
@@ -369,8 +370,8 @@
         updateButtonStates(lastPunchState);
       }
 
-      // Render Admin Review Panel if User is ADMIN
-      if (userRole === 'ADMIN') {
+      // Render Admin Review Panel ONLY IF User is ADMIN AND there are pending approval requests
+      if (userRole === 'ADMIN' && pendingUsers && pendingUsers.length > 0) {
         document.getElementById('adminSection').style.display = 'block';
         renderPendingUsersList(pendingUsers);
       } else {
@@ -381,7 +382,7 @@
     function renderPendingUsersList(users) {
       var container = document.getElementById('pendingUsersList');
       if (!users || users.length === 0) {
-        container.innerHTML = '<div style="font-size: 12px; color: #94A3B8;">無待審核同仁。</div>';
+        container.innerHTML = '';
         return;
       }
 
