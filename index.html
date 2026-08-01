@@ -8,6 +8,7 @@
     :root {
       --primary: #06C755;
       --danger: #FF4757;
+      --warning: #F59E0B;
       --bg: #0F172A;
       --card-bg: #1E293B;
       --text: #F8FAFC;
@@ -90,6 +91,17 @@
       border-color: rgba(74, 222, 128, 0.3);
       background: rgba(34, 197, 94, 0.1);
     }
+    .desktop-warning {
+      background: rgba(245, 158, 11, 0.12);
+      border: 1px solid rgba(245, 158, 11, 0.4);
+      color: #FBBF24;
+      border-radius: 14px;
+      padding: 18px;
+      font-size: 14px;
+      line-height: 1.6;
+      text-align: left;
+      margin-bottom: 20px;
+    }
     .btn {
       display: block;
       width: 100%;
@@ -135,13 +147,20 @@
 </head>
 <body>
   <div class="card">
-    <div class="version-tag">v10.0.0 正式版</div>
+    <div class="version-tag">v11.0.0 手機防護版</div>
     <img id="avatar" class="avatar" src="https://via.placeholder.com/88/06C755/FFFFFF?text=LINE" alt="Avatar">
     <div id="userName" class="user-name">連線中...</div>
     <div id="userId" class="user-id">正在驗證 LINE 身份...</div>
 
     <div class="gps-badge">
       <span>📡 1-Click 自動 GPS 定位發送</span>
+    </div>
+
+    <!-- Desktop Lock Warning Banner -->
+    <div id="desktopLockBanner" class="desktop-warning" style="display:none;">
+      <strong>⛔ 安全防護：禁止電腦端打卡</strong><br>
+      系統偵測到您正使用電腦瀏覽器開啟。為防止代打卡與維護考勤公正，本系統<strong>嚴禁電腦端打卡</strong>。<br><br>
+      📱 <strong>請改用手機 LINE App 開啟本頁面打卡。</strong>
     </div>
 
     <div id="statusBox" class="status-box">請稍候，系統正在透過 LIFF 初始化身份資訊...</div>
@@ -157,6 +176,10 @@
     var LIFF_ID = '2010885295-Rao11tsR';
     var API_URL = 'https://script.google.com/macros/s/AKfycbwsjmJdMBlEqQ85E4AnemT9H3FREtN8VGxP363dywxtHI1mGfYZjMAE3nXRiK6gNahu/exec';
     var currentUser = null;
+
+    function isMobileDevice() {
+      return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    }
 
     function setStatus(msg, type) {
       var box = document.getElementById('statusBox');
@@ -211,13 +234,32 @@
       if (currentUser.picture) {
         document.getElementById('avatar').src = currentUser.picture;
       }
-      setStatus('✅ LINE 身份驗證完成！(v10.0.0)\n點擊下方按鈕即可 1 秒完成 GPS 打卡：', 'success');
-      document.getElementById('actionButtons').style.display = 'block';
+
+      // Check Mobile vs Desktop
+      var inLiffClient = liff.isInClient();
+      var mobileUA = isMobileDevice();
+
+      if (!inLiffClient && !mobileUA) {
+        // Desktop Browser Detected -> Lock Out
+        document.getElementById('desktopLockBanner').style.display = 'block';
+        document.getElementById('actionButtons').style.display = 'none';
+        setStatus('⛔ 已鎖定電腦端打卡。\n請使用手機 LINE 掃碼或於 LINE App 開啟。', 'error');
+      } else {
+        // Mobile Device Allowed
+        document.getElementById('desktopLockBanner').style.display = 'none';
+        setStatus('✅ LINE 身份驗證完成！(v11.0.0 手機端防護)\n點擊下方按鈕即可 1 秒完成 GPS 打卡：', 'success');
+        document.getElementById('actionButtons').style.display = 'block';
+      }
     }
 
     function handlePunch(type) {
       if (!currentUser || !currentUser.userId) {
         alert('尚未取得 LINE 身份，請重試');
+        return;
+      }
+
+      if (!liff.isInClient() && !isMobileDevice()) {
+        alert('⛔ 系統已禁止電腦端打卡！請使用手機開啟。');
         return;
       }
 
@@ -245,7 +287,7 @@
     }
 
     function sendPunchData(type, lat, lng, acc) {
-      setStatus('⏳ 正在寫入 Google Sheet 試算表 (v10.0.0 API)...', '');
+      setStatus('⏳ 正在寫入 Google Sheet 試算表 (v11.0.0 API)...', '');
 
       var formData = new URLSearchParams();
       formData.append('userId', currentUser.userId);
@@ -254,6 +296,7 @@
       formData.append('latitude', lat || '');
       formData.append('longitude', lng || '');
       formData.append('accuracy', acc || '');
+      formData.append('deviceType', isMobileDevice() ? 'Mobile' : 'Desktop');
 
       fetch(API_URL, {
         method: 'POST',
