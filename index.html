@@ -41,17 +41,39 @@
       border: 1px solid rgba(255,255,255,0.08);
       position: relative;
     }
+    /* Version Tag on Top Left */
     .version-tag {
       position: absolute;
       top: 14px;
-      right: 16px;
+      left: 16px;
       background: #0284C7;
       color: white;
       font-size: 11px;
       font-weight: bold;
-      padding: 4px 8px;
+      padding: 4px 10px;
       border-radius: 12px;
       letter-spacing: 0.5px;
+    }
+    /* Profile Icon Button on Top Right */
+    .profile-btn {
+      position: absolute;
+      top: 10px;
+      right: 14px;
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.15);
+      color: white;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .profile-btn:active {
+      background: rgba(255,255,255,0.25);
     }
     .avatar {
       width: 88px;
@@ -192,11 +214,177 @@
     }
     .btn-approve { background: #059669; }
     .btn-reject { background: #DC2626; }
+
+    /* Personal Center Modal Overlay */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.75);
+      backdrop-filter: blur(6px);
+      z-index: 999;
+      display: flex;
+      justify-content: center;
+      align-items: flex-end;
+      visibility: hidden;
+      opacity: 0;
+      transition: visibility 0.2s, opacity 0.2s;
+    }
+    .modal-overlay.active {
+      visibility: visible;
+      opacity: 1;
+    }
+    .modal-content {
+      background: #1E293B;
+      width: 100%;
+      max-width: 440px;
+      max-height: 85vh;
+      overflow-y: auto;
+      border-top-left-radius: 24px;
+      border-top-right-radius: 24px;
+      padding: 24px;
+      box-sizing: border-box;
+      border: 1px solid rgba(255,255,255,0.1);
+      box-shadow: 0 -12px 32px rgba(0,0,0,0.5);
+      color: var(--text);
+      text-align: left;
+    }
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      padding-bottom: 14px;
+      margin-bottom: 18px;
+    }
+    .modal-title {
+      font-size: 18px;
+      font-weight: bold;
+      color: #38BDF8;
+    }
+    .modal-close {
+      background: rgba(255,255,255,0.1);
+      border: none;
+      color: white;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    .profile-card {
+      background: rgba(15, 23, 42, 0.6);
+      border-radius: 14px;
+      padding: 16px;
+      margin-bottom: 16px;
+      border: 1px solid rgba(255,255,255,0.06);
+    }
+    .role-badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: bold;
+      margin-top: 6px;
+    }
+    .role-owner { background: #8B5CF6; color: white; }
+    .role-admin { background: #0284C7; color: white; }
+    .role-emp { background: #475569; color: white; }
+
+    .hours-box {
+      background: linear-gradient(135deg, rgba(6, 199, 85, 0.15), rgba(5, 150, 105, 0.05));
+      border: 1px solid rgba(6, 199, 85, 0.3);
+      border-radius: 14px;
+      padding: 16px;
+      margin-bottom: 16px;
+      text-align: center;
+    }
+    .hours-num {
+      font-size: 32px;
+      font-weight: 800;
+      color: #4ADE80;
+      margin: 6px 0;
+    }
+    .hours-cycle {
+      font-size: 12px;
+      color: #94A3B8;
+    }
+    /* History Table Styling */
+    .history-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      margin-top: 4px;
+    }
+    .history-table th, .history-table td {
+      padding: 10px 8px;
+      text-align: left;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    .history-table th {
+      color: #94A3B8;
+      font-size: 12px;
+      font-weight: 600;
+      background: rgba(15, 23, 42, 0.4);
+    }
+    .badge-in {
+      background: rgba(6, 199, 85, 0.15);
+      color: #4ADE80;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-weight: bold;
+    }
+    .badge-out {
+      background: rgba(255, 71, 87, 0.15);
+      color: #F87171;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-weight: bold;
+    }
+    .btn-more {
+      width: 100%;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.12);
+      color: #38BDF8;
+      padding: 10px 0;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 10px;
+      transition: background 0.2s;
+    }
+    .btn-more:active {
+      background: rgba(56, 189, 248, 0.15);
+    }
+    .input-group {
+      margin-bottom: 12px;
+    }
+    .input-group label {
+      display: block;
+      font-size: 12px;
+      color: #94A3B8;
+      margin-bottom: 4px;
+    }
+    .input-control {
+      width: 100%;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid rgba(255,255,255,0.15);
+      background: #0F172A;
+      color: white;
+      box-sizing: border-box;
+      font-size: 14px;
+    }
   </style>
 </head>
 <body>
   <div class="card">
     <div class="version-tag">v2.1</div>
+    <button class="profile-btn" onclick="toggleProfileModal(true)">👤</button>
+
     <img id="avatar" class="avatar" src="https://via.placeholder.com/88/06C755/FFFFFF?text=LINE" alt="Avatar">
     <div id="userName" class="user-name">連線中...</div>
 
@@ -225,6 +413,69 @@
     </div>
   </div>
 
+  <!-- Personal Center Modal -->
+  <div id="profileModal" class="modal-overlay" onclick="handleOverlayClick(event)">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div class="modal-title">👤 個人中心</div>
+        <button class="modal-close" onclick="toggleProfileModal(false)">✕</button>
+      </div>
+
+      <!-- Section 1: User Profile & Role Info -->
+      <div class="profile-card">
+        <div style="font-weight:bold; font-size:16px;" id="modalUserTitle"> Paul</div>
+        <div id="modalRoleBadge" class="role-badge role-owner">👑 開發者</div>
+      </div>
+
+      <!-- Section 2: Monthly Work Hours Stat Card -->
+      <div class="hours-box">
+        <div style="font-size:13px; color:#94A3B8;">⏱️ 本月累計工作時數</div>
+        <div id="modalMonthlyHours" class="hours-num">0.0 小時</div>
+        <div id="modalCycleText" class="hours-cycle">計薪區間: --</div>
+      </div>
+
+      <!-- Section 3: Recent Punch History Table & Show More Button -->
+      <div style="font-weight:bold; font-size:14px; margin-bottom:8px; color:#38BDF8;">📜 打卡歷史紀錄</div>
+      <div class="profile-card" style="padding:10px;">
+        <div id="recentHistoryTableBox">
+          <div style="font-size:12px; color:#94A3B8; text-align:center; padding:8px;">無紀錄</div>
+        </div>
+        <button id="btnToggleHistory" class="btn-more" style="display:none;" onclick="toggleHistoryMore()">🔽 展開更多歷史紀錄</button>
+      </div>
+
+      <!-- Section 4: Company Settings Form (OWNER / ADMIN Only) -->
+      <div id="companySettingsCard" class="profile-card" style="display:none;">
+        <div style="font-weight:bold; font-size:14px; margin-bottom:12px; color:#F59E0B;">⚙️ 公司考勤與計薪設定 (主管專屬)</div>
+
+        <div class="input-group">
+          <label>每月計薪起算日 (1日 ~ 31日)</label>
+          <select id="setCutoffDay" class="input-control">
+            <!-- 1 to 31 options -->
+          </select>
+        </div>
+
+        <div class="input-group">
+          <label>公司 GPS 緯度 (Latitude)</label>
+          <input type="text" id="setCompanyLat" class="input-control" placeholder="例: 22.6057">
+        </div>
+
+        <div class="input-group">
+          <label>公司 GPS 經度 (Longitude)</label>
+          <input type="text" id="setCompanyLng" class="input-control" placeholder="例: 120.3248">
+        </div>
+
+        <button class="btn-sm btn-approve" style="width:100%; margin-bottom:12px; padding:8px 0;" onclick="fetchCurrentGpsForCompany()">📍 抓取當前手機定位為公司地址</button>
+
+        <div class="input-group">
+          <label>允許打卡範圍半徑 (公尺, 0 代表不限制)</label>
+          <input type="number" id="setAllowedRadius" class="input-control" value="200">
+        </div>
+
+        <button class="btn btn-apply" style="padding:12px 0; font-size:15px; margin-bottom:0;" onclick="saveCompanySettings()">💾 儲存公司考勤設定</button>
+      </div>
+    </div>
+  </div>
+
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <script>
     var LIFF_ID = '2010885295-Rao11tsR';
@@ -233,6 +484,19 @@
     var lastPunchState = null;
     var userStatus = 'UNREGISTERED';
     var userRole = 'EMPLOYEE';
+    var latestResponseData = null;
+    var isShowingAllHistory = false;
+
+    function initCutoffSelect() {
+      var sel = document.getElementById('setCutoffDay');
+      sel.innerHTML = '';
+      for (var i = 1; i <= 31; i++) {
+        var opt = document.createElement('option');
+        opt.value = i;
+        opt.textContent = '每月 ' + i + ' 日起算';
+        sel.appendChild(opt);
+      }
+    }
 
     function isMobileDevice() {
       return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
@@ -263,7 +527,159 @@
       }
     }
 
+    function toggleProfileModal(show) {
+      var modal = document.getElementById('profileModal');
+      if (show) {
+        modal.classList.add('active');
+        if (currentUser) updateProfileModalUI();
+      } else {
+        modal.classList.remove('active');
+      }
+    }
+
+    function handleOverlayClick(e) {
+      if (e.target.id === 'profileModal') {
+        toggleProfileModal(false);
+      }
+    }
+
+    function toggleHistoryMore() {
+      isShowingAllHistory = !isShowingAllHistory;
+      renderHistoryTable();
+    }
+
+    function renderHistoryTable() {
+      var box = document.getElementById('recentHistoryTableBox');
+      var btn = document.getElementById('btnToggleHistory');
+      var pArr = (latestResponseData && latestResponseData.recentPunches) ? latestResponseData.recentPunches : [];
+
+      if (pArr.length === 0) {
+        box.innerHTML = '<div style="font-size:12px; color:#94A3B8; text-align:center; padding:8px;">無歷史紀錄</div>';
+        btn.style.display = 'none';
+        return;
+      }
+
+      var displayList = isShowingAllHistory ? pArr : pArr.slice(0, 5);
+
+      var html = '<table class="history-table">' +
+                   '<thead>' +
+                     '<tr>' +
+                       '<th style="width:30%;">打卡類型</th>' +
+                       '<th style="width:70%;">打卡時間</th>' +
+                     '</tr>' +
+                   '</thead>' +
+                   '<tbody>';
+
+      for (var k = 0; k < displayList.length; k++) {
+        var item = displayList[k];
+        var isPunchIn = item.type === '上班';
+        var badgeClass = isPunchIn ? 'badge-in' : 'badge-out';
+        var icon = isPunchIn ? '📍' : '🔴';
+        var timeStr = String(item.time).replace('T', ' ').substring(0, 19);
+
+        html += '<tr>' +
+                  '<td><span class="' + badgeClass + '">' + icon + ' ' + escapeHtml(item.type) + '</span></td>' +
+                  '<td style="color:#CBD5E1; font-family:monospace;">' + escapeHtml(timeStr) + '</td>' +
+                '</tr>';
+      }
+
+      html += '</tbody></table>';
+      box.innerHTML = html;
+
+      // Show/Hide "Show More" Button if history > 5
+      if (pArr.length > 5) {
+        btn.style.display = 'block';
+        if (isShowingAllHistory) {
+          btn.textContent = '▲ 折疊顯示前 5 筆紀錄';
+        } else {
+          btn.textContent = '🔽 展開更多歷史紀錄 (共 ' + pArr.length + ' 筆)';
+        }
+      } else {
+        btn.style.display = 'none';
+      }
+    }
+
+    function updateProfileModalUI() {
+      document.getElementById('modalUserTitle').textContent = currentUser.name;
+
+      var badge = document.getElementById('modalRoleBadge');
+      if (userRole === 'OWNER') {
+        badge.textContent = '👑 系統創辦人';
+        badge.className = 'role-badge role-owner';
+      } else if (userRole === 'ADMIN') {
+        badge.textContent = '⚙️ 公司最高管理者';
+        badge.className = 'role-badge role-admin';
+      } else {
+        badge.textContent = '👤 一般職員';
+        badge.className = 'role-badge role-emp';
+      }
+
+      if (latestResponseData) {
+        document.getElementById('modalMonthlyHours').textContent = (latestResponseData.monthlyHours || 0) + ' 小時';
+        document.getElementById('modalCycleText').textContent = '計薪區間: ' + (latestResponseData.cycleText || '--');
+
+        // Render Table and Button
+        renderHistoryTable();
+
+        // Settings Panel for OWNER or ADMIN
+        if (userRole === 'OWNER' || userRole === 'ADMIN') {
+          document.getElementById('companySettingsCard').style.display = 'block';
+          if (latestResponseData.settings) {
+            document.getElementById('setCutoffDay').value = latestResponseData.settings.cutoff_day || 1;
+            document.getElementById('setCompanyLat').value = latestResponseData.settings.company_lat || '';
+            document.getElementById('setCompanyLng').value = latestResponseData.settings.company_lng || '';
+            document.getElementById('setAllowedRadius').value = latestResponseData.settings.allowed_radius_m || 200;
+          }
+        } else {
+          document.getElementById('companySettingsCard').style.display = 'none';
+        }
+      }
+    }
+
+    function fetchCurrentGpsForCompany() {
+      if ("geolocation" in navigator) {
+        navigator.geolocation.getCurrentPosition(function(pos) {
+          document.getElementById('setCompanyLat').value = pos.coords.latitude.toFixed(6);
+          document.getElementById('setCompanyLng').value = pos.coords.longitude.toFixed(6);
+          alert('📍 抓取當前定位成功！');
+        }, function(err) {
+          alert('抓取 GPS 失敗: ' + err.message);
+        });
+      }
+    }
+
+    function saveCompanySettings() {
+      var cutoffDay = document.getElementById('setCutoffDay').value;
+      var companyLat = document.getElementById('setCompanyLat').value;
+      var companyLng = document.getElementById('setCompanyLng').value;
+      var allowedRadius = document.getElementById('setAllowedRadius').value;
+
+      var formData = new URLSearchParams();
+      formData.append('action', 'updateSettings');
+      formData.append('adminUserId', currentUser.userId);
+      formData.append('cutoffDay', cutoffDay);
+      formData.append('companyLat', companyLat);
+      formData.append('companyLng', companyLng);
+      formData.append('allowedRadius', allowedRadius);
+
+      fetch(API_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: formData
+      })
+      .then(function() {
+        alert('💾 公司考勤設定已儲存！');
+        fetchUserStatusAndRender();
+      })
+      .catch(function(err) {
+        alert('儲存失敗: ' + err.message);
+      });
+    }
+
     function initLiff() {
+      initCutoffSelect();
+
       if (typeof liff === 'undefined') {
         setStatus('❌ LIFF SDK 載入失敗，請確認網路連線。', 'error');
         return;
@@ -316,17 +732,16 @@
         document.getElementById('avatar').src = currentUser.picture;
       }
 
-      // Check Mobile vs Desktop
       if (!liff.isInClient() && !isMobileDevice()) {
         enforceDesktopLock();
         return;
       }
 
-      // Query User Status & Pending List
       fetch(API_URL + '?userId=' + encodeURIComponent(currentUser.userId))
         .then(function(res) { return res.json(); })
         .then(function(data) {
           if (data) {
+            latestResponseData = data;
             userStatus = data.userStatus || 'UNREGISTERED';
             userRole = data.userRole || 'EMPLOYEE';
             lastPunchState = data.lastPunchType || null;
@@ -344,25 +759,21 @@
       document.getElementById('desktopLockBanner').style.display = 'none';
       document.getElementById('statusBox').style.display = 'block';
 
-      // 1. Unregistered (首次使用者)
       if (userStatus === 'UNREGISTERED') {
         setStatus('⚠️ 歡迎使用！您是首次開啟系統，請點擊下方按鈕提出打卡權限申請。', 'warning');
         document.getElementById('applySection').style.display = 'block';
         document.getElementById('actionButtons').style.display = 'none';
       }
-      // 2. Pending (審核中)
       else if (userStatus === 'PENDING') {
         setStatus('⏳ 您的打卡權限申請審核中，請通知管理員進行審核。', 'warning');
         document.getElementById('applySection').style.display = 'none';
         document.getElementById('actionButtons').style.display = 'none';
       }
-      // 3. Rejected (審核未通過)
       else if (userStatus === 'REJECTED') {
         setStatus('❌ 您的打卡權限申請未通過審核，無法進行打卡。', 'error');
         document.getElementById('applySection').style.display = 'none';
         document.getElementById('actionButtons').style.display = 'none';
       }
-      // 4. Approved (審核通過 / 管理員)
       else if (userStatus === 'APPROVED') {
         setStatus('✅ LINE 身份驗證完成！', 'success');
         document.getElementById('applySection').style.display = 'none';
@@ -370,8 +781,7 @@
         updateButtonStates(lastPunchState);
       }
 
-      // Render Admin Review Panel ONLY IF User is ADMIN AND there are pending approval requests
-      if (userRole === 'ADMIN' && pendingUsers && pendingUsers.length > 0) {
+      if ((userRole === 'ADMIN' || userRole === 'OWNER') && pendingUsers && pendingUsers.length > 0) {
         document.getElementById('adminSection').style.display = 'block';
         renderPendingUsersList(pendingUsers);
       } else {
