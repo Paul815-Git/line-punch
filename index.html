@@ -61,13 +61,7 @@
     .user-name {
       font-size: 22px;
       font-weight: 700;
-      margin-bottom: 4px;
-    }
-    .user-id {
-      font-size: 12px;
-      color: var(--subtext);
-      word-break: break-all;
-      margin-bottom: 24px;
+      margin-bottom: 20px;
     }
     .status-box {
       background: rgba(15, 23, 42, 0.6);
@@ -96,10 +90,11 @@
       border: 1px solid rgba(245, 158, 11, 0.4);
       color: #FBBF24;
       border-radius: 14px;
-      padding: 18px;
-      font-size: 14px;
-      line-height: 1.6;
-      text-align: left;
+      padding: 16px;
+      font-size: 15px;
+      font-weight: 600;
+      line-height: 1.5;
+      text-align: center;
       margin-bottom: 20px;
     }
     .btn {
@@ -132,35 +127,17 @@
       cursor: not-allowed;
       box-shadow: none;
     }
-    .gps-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      background: rgba(255,255,255,0.06);
-      padding: 6px 12px;
-      border-radius: 20px;
-      font-size: 12px;
-      color: #94A3B8;
-      margin-bottom: 20px;
-    }
   </style>
 </head>
 <body>
   <div class="card">
-    <div class="version-tag">v11.0.0 手機防護版</div>
+    <div class="version-tag">v2.0</div>
     <img id="avatar" class="avatar" src="https://via.placeholder.com/88/06C755/FFFFFF?text=LINE" alt="Avatar">
     <div id="userName" class="user-name">連線中...</div>
-    <div id="userId" class="user-id">正在驗證 LINE 身份...</div>
 
-    <div class="gps-badge">
-      <span>📡 1-Click 自動 GPS 定位發送</span>
-    </div>
-
-    <!-- Desktop Lock Warning Banner -->
+    <!-- Desktop Lock Notice Banner -->
     <div id="desktopLockBanner" class="desktop-warning" style="display:none;">
-      <strong>⛔ 安全防護：禁止電腦端打卡</strong><br>
-      系統偵測到您正使用電腦瀏覽器開啟。為防止代打卡與維護考勤公正，本系統<strong>嚴禁電腦端打卡</strong>。<br><br>
-      📱 <strong>請改用手機 LINE App 開啟本頁面打卡。</strong>
+      ⛔ 請改用手機 LINE App 開啟本頁面打卡。
     </div>
 
     <div id="statusBox" class="status-box">請稍候，系統正在透過 LIFF 初始化身份資訊...</div>
@@ -228,9 +205,14 @@
         });
     }
 
+    function enforceDesktopLock() {
+      document.getElementById('desktopLockBanner').style.display = 'block';
+      document.getElementById('statusBox').style.display = 'none';
+      document.getElementById('actionButtons').style.display = 'none';
+    }
+
     function renderUser() {
       document.getElementById('userName').textContent = currentUser.name;
-      document.getElementById('userId').textContent = 'User ID: ' + currentUser.userId;
       if (currentUser.picture) {
         document.getElementById('avatar').src = currentUser.picture;
       }
@@ -240,14 +222,12 @@
       var mobileUA = isMobileDevice();
 
       if (!inLiffClient && !mobileUA) {
-        // Desktop Browser Detected -> Lock Out
-        document.getElementById('desktopLockBanner').style.display = 'block';
-        document.getElementById('actionButtons').style.display = 'none';
-        setStatus('⛔ 已鎖定電腦端打卡。\n請使用手機 LINE 掃碼或於 LINE App 開啟。', 'error');
+        enforceDesktopLock();
       } else {
         // Mobile Device Allowed
         document.getElementById('desktopLockBanner').style.display = 'none';
-        setStatus('✅ LINE 身份驗證完成！(v11.0.0 手機端防護)\n點擊下方按鈕即可 1 秒完成 GPS 打卡：', 'success');
+        document.getElementById('statusBox').style.display = 'block';
+        setStatus('✅ LINE 身份驗證完成！\n點擊下方按鈕即可 1 秒完成 GPS 打卡：', 'success');
         document.getElementById('actionButtons').style.display = 'block';
       }
     }
@@ -259,7 +239,8 @@
       }
 
       if (!liff.isInClient() && !isMobileDevice()) {
-        alert('⛔ 系統已禁止電腦端打卡！請使用手機開啟。');
+        alert('⛔ 請改用手機 LINE App 開啟本頁面打卡。');
+        enforceDesktopLock();
         return;
       }
 
@@ -287,7 +268,7 @@
     }
 
     function sendPunchData(type, lat, lng, acc) {
-      setStatus('⏳ 正在寫入 Google Sheet 試算表 (v11.0.0 API)...', '');
+      setStatus('⏳ 正在寫入 Google Sheet 試算表...', '');
 
       var formData = new URLSearchParams();
       formData.append('userId', currentUser.userId);
@@ -296,7 +277,7 @@
       formData.append('latitude', lat || '');
       formData.append('longitude', lng || '');
       formData.append('accuracy', acc || '');
-      formData.append('deviceType', isMobileDevice() ? 'Mobile' : 'Desktop');
+      formData.append('deviceType', 'Mobile');
 
       fetch(API_URL, {
         method: 'POST',
