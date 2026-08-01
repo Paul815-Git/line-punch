@@ -883,7 +883,7 @@
         return;
       }
 
-      // Pre-check 1: Check userStatus permission on client
+      // Pre-check: Verify status permission
       if (userStatus !== 'APPROVED' && currentUser.userId !== 'Uad06e7dc67fd8bf94e77d6dc371a4299') {
         setStatus('❌ 無法打卡：您的帳號尚未審核通過，請通知管理員進行審核！', 'error');
         return;
@@ -915,58 +915,37 @@
     function sendPunchData(type, lat, lng, acc) {
       setStatus('⏳ 正在驗證與寫入中...', '');
 
-      var formData = new URLSearchParams();
-      formData.append('userId', currentUser.userId);
-      formData.append('userName', currentUser.name);
-      formData.append('punchType', type);
-      formData.append('latitude', lat || '');
-      formData.append('longitude', lng || '');
-      formData.append('accuracy', acc || '');
-      formData.append('deviceType', 'Mobile');
+      var queryUrl = API_URL + '?action=punch' +
+        '&userId=' + encodeURIComponent(currentUser.userId) +
+        '&userName=' + encodeURIComponent(currentUser.name) +
+        '&punchType=' + encodeURIComponent(type) +
+        '&latitude=' + encodeURIComponent(lat || '') +
+        '&longitude=' + encodeURIComponent(lng || '') +
+        '&accuracy=' + encodeURIComponent(acc || '') +
+        '&deviceType=Mobile';
 
-      fetch(API_URL, {
-        method: 'POST',
-        mode: 'no-cors',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: formData
-      })
-      .then(function() {
-        // Double Check Server Verification to prevent False Positives
-        setTimeout(function() {
-          fetch(API_URL + '?userId=' + encodeURIComponent(currentUser.userId))
-            .then(function(res) { return res.json(); })
-            .then(function(verifyData) {
-              if (verifyData && verifyData.lastPunchType === type) {
-                // Verified Genuine Success
-                latestResponseData = verifyData;
-                lastPunchState = type;
-                updateButtonStates(type);
+      fetch(queryUrl)
+        .then(function(res) { return res.json(); })
+        .then(function(resData) {
+          if (resData && resData.success) {
+            lastPunchState = type;
+            updateButtonStates(type);
 
-                var now = new Date();
-                var timeStr = now.getFullYear() + '-' +
-                  String(now.getMonth()+1).padStart(2,'0') + '-' +
-                  String(now.getDate()).padStart(2,'0') + ' ' +
-                  String(now.getHours()).padStart(2,'0') + ':' +
-                  String(now.getMinutes()).padStart(2,'0') + ':' +
-                  String(now.getSeconds()).padStart(2,'0');
+            var timeStr = resData.time || '';
+            setStatus(type + '打卡成功！\n姓名: ' + currentUser.name + '\n時間: ' + timeStr, 'success');
 
-                setStatus(type + '打卡成功！\n姓名: ' + currentUser.name + '\n時間: ' + timeStr, 'success');
-              } else {
-                // Server rejected write (unapproved or out of geofence)
-                updateButtonStates(lastPunchState);
-                setStatus('❌ 打卡失敗！請確認是否已通過審核，或是否超出公司打卡範圍。', 'error');
-              }
-            })
-            .catch(function(err) {
-              updateButtonStates(lastPunchState);
-              setStatus('❌ 驗證失敗: ' + err.message, 'error');
-            });
-        }, 800);
-      })
-      .catch(function(err) {
-        updateButtonStates(lastPunchState);
-        setStatus('❌ 請求發送失敗: ' + err.message, 'error');
-      });
+            // Refresh user status and history data
+            fetchUserStatusAndRender();
+          } else {
+            updateButtonStates(lastPunchState);
+            var errMsg = (resData && resData.message) ? resData.message : '❌ 打卡失敗：未知錯誤';
+            setStatus(errMsg, 'error');
+          }
+        })
+        .catch(function(err) {
+          updateButtonStates(lastPunchState);
+          setStatus('❌ 打卡請求失敗: ' + err.message, 'error');
+        });
     }
 
     window.onload = initLiff;
