@@ -486,6 +486,7 @@
     var userRole = 'EMPLOYEE';
     var latestResponseData = null;
     var isShowingAllHistory = false;
+    var autoPollTimer = null;
 
     function initCutoffSelect() {
       var sel = document.getElementById('setCutoffDay');
@@ -765,17 +766,37 @@
         setStatus('⏳ 您的打卡權限申請審核中，請通知管理員進行審核。', 'warning');
         document.getElementById('applySection').style.display = 'none';
         document.getElementById('actionButtons').style.display = 'none';
+
+        // Auto-poll every 8 seconds for pending approval
+        if (!autoPollTimer) {
+          autoPollTimer = setInterval(function() {
+            if (userStatus === 'PENDING') {
+              fetchUserStatusAndRender();
+            } else {
+              clearInterval(autoPollTimer);
+              autoPollTimer = null;
+            }
+          }, 8000);
+        }
       }
       else if (userStatus === 'REJECTED') {
+        if (autoPollTimer) { clearInterval(autoPollTimer); autoPollTimer = null; }
         setStatus('❌ 您的打卡權限申請未通過審核，無法進行打卡。', 'error');
         document.getElementById('applySection').style.display = 'none';
         document.getElementById('actionButtons').style.display = 'none';
       }
       else if (userStatus === 'APPROVED') {
-        setStatus('✅ LINE 身份驗證完成！', 'success');
+        if (autoPollTimer) { clearInterval(autoPollTimer); autoPollTimer = null; }
         document.getElementById('applySection').style.display = 'none';
         document.getElementById('actionButtons').style.display = 'block';
         updateButtonStates(lastPunchState);
+
+        var elapsedHours = (latestResponseData && latestResponseData.elapsedShiftHours) ? latestResponseData.elapsedShiftHours : 0;
+        if (lastPunchState === '上班' && elapsedHours >= 10) {
+          setStatus('⚠️ 溫馨提醒：您今日已上班 ' + elapsedHours + ' 小時，若已下班請記得點擊下班打卡！', 'warning');
+        } else {
+          setStatus('✅ LINE 身份驗證完成！', 'success');
+        }
       }
 
       if ((userRole === 'ADMIN' || userRole === 'OWNER') && pendingUsers && pendingUsers.length > 0) {
@@ -838,6 +859,9 @@
         userStatus = 'PENDING';
         setStatus('⏳ 申請已提交！請通知管理員進行審核。', 'warning');
         document.getElementById('applySection').style.display = 'none';
+
+        // Auto poll for instant approval
+        fetchUserStatusAndRender();
       })
       .catch(function(err) {
         document.querySelector('.btn-apply').disabled = false;
@@ -883,7 +907,6 @@
         return;
       }
 
-      // Pre-check: Verify status permission
       if (userStatus !== 'APPROVED' && currentUser.userId !== 'Uad06e7dc67fd8bf94e77d6dc371a4299') {
         setStatus('❌ 無法打卡：您的帳號尚未審核通過，請通知管理員進行審核！', 'error');
         return;
@@ -905,7 +928,7 @@
             console.warn("GPS error: " + err.message);
             sendPunchData(type, "", "", "");
           },
-          { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
+          { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 }
         );
       } else {
         sendPunchData(type, "", "", "");
