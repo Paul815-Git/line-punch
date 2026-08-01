@@ -742,7 +742,8 @@
       var html = '';
       for (var i = 0; i < pendingLeaves.length; i++) {
         var lv = pendingLeaves[i];
-        html += '<div class="leave-review-item">' +
+        var escapedId = escapeHtml(lv.leaveId);
+        html += '<div class="leave-review-item" id="leave-card-' + escapedId + '">' +
           '<div class="leave-review-name">' + escapeHtml(lv.userName) + '</div>' +
           '<div class="leave-review-detail">' +
             '假別：' + escapeHtml(lv.leaveType) + '<br>' +
@@ -751,17 +752,29 @@
             '申請時間：' + escapeHtml(lv.appliedAt) +
           '</div>' +
           '<div class="leave-review-actions">' +
-            '<button class="btn-sm btn-approve" style="flex:1; padding:8px;" onclick="handleLeaveReview(\'' + escapeHtml(lv.leaveId) + '\', \'approve\')">✅ 批准</button>' +
-            '<button class="btn-sm btn-reject" style="flex:1; padding:8px;" onclick="handleLeaveReview(\'' + escapeHtml(lv.leaveId) + '\', \'reject\')">❌ 拒絕</button>' +
+            '<button class="btn-sm btn-approve" style="flex:1; padding:8px;" onclick="handleLeaveReview(\'' + escapedId + '\', \'approve\', this)">✅ 批准</button>' +
+            '<button class="btn-sm btn-reject" style="flex:1; padding:8px;" onclick="handleLeaveReview(\'' + escapedId + '\', \'reject\', this)">❌ 拒絕</button>' +
           '</div>' +
         '</div>';
       }
       container.innerHTML = html;
     }
 
-    function handleLeaveReview(leaveId, reviewAction) {
+    function handleLeaveReview(leaveId, reviewAction, btnEl) {
       var actionText = reviewAction === 'approve' ? '批准' : '拒絕';
       if (!confirm('確定要' + actionText + '此請假申請嗎？')) return;
+
+      // Disable all buttons in this item to prevent multi-clicking
+      var parentCard = document.getElementById('leave-card-' + leaveId);
+      if (parentCard) {
+        var btns = parentCard.querySelectorAll('button');
+        for (var b = 0; b < btns.length; b++) {
+          btns[b].disabled = true;
+        }
+      }
+      if (btnEl) {
+        btnEl.textContent = '⏳ 處理中...';
+      }
 
       var url = API_URL + '?action=reviewLeave' +
         '&adminUserId=' + encodeURIComponent(currentUser.userId) +
@@ -776,10 +789,20 @@
             fetchUserStatusAndRender();
           } else {
             alert('❌ 操作失敗：' + (data && data.message ? data.message : '未知錯誤'));
+            if (parentCard) {
+              var btns = parentCard.querySelectorAll('button');
+              for (var b = 0; b < btns.length; b++) btns[b].disabled = false;
+            }
+            if (btnEl) btnEl.textContent = reviewAction === 'approve' ? '✅ 批准' : '❌ 拒絕';
           }
         })
         .catch(function(err) {
           alert('❌ 網路錯誤：' + err.message);
+          if (parentCard) {
+            var btns = parentCard.querySelectorAll('button');
+            for (var b = 0; b < btns.length; b++) btns[b].disabled = false;
+          }
+          if (btnEl) btnEl.textContent = reviewAction === 'approve' ? '✅ 批准' : '❌ 拒絕';
         });
     }
 
@@ -1093,14 +1116,15 @@
       var html = '';
       for (var i = 0; i < users.length; i++) {
         var u = users[i];
-        html += '<div class="user-item">' +
+        var escapedId = escapeHtml(u.userId);
+        html += '<div class="user-item" id="user-card-' + escapedId + '">' +
                   '<div class="user-info">' +
                     '<strong style="color:#F8FAFC;">' + escapeHtml(u.userName) + '</strong>' +
                     '<span class="user-time">申請: ' + escapeHtml(u.appliedAt) + '</span>' +
                   '</div>' +
                   '<div class="admin-actions">' +
-                    '<button class="btn-sm btn-approve" onclick="handleApprove(\'' + escapeHtml(u.userId) + '\', \'APPROVED\')">✅ 批准</button>' +
-                    '<button class="btn-sm btn-reject" onclick="handleApprove(\'' + escapeHtml(u.userId) + '\', \'REJECTED\')">❌ 拒絕</button>' +
+                    '<button class="btn-sm btn-approve" onclick="handleApprove(\'' + escapedId + '\', \'APPROVED\', this)">✅ 批准</button>' +
+                    '<button class="btn-sm btn-reject" onclick="handleApprove(\'' + escapedId + '\', \'REJECTED\', this)">❌ 拒絕</button>' +
                   '</div>' +
                 '</div>';
       }
@@ -1144,8 +1168,15 @@
       });
     }
 
-    function handleApprove(targetUserId, newStatus) {
+    function handleApprove(targetUserId, newStatus, btnEl) {
       if (!confirm('確定要 ' + (newStatus === 'APPROVED' ? '批准' : '拒絕') + ' 該同仁的打卡權限嗎？')) return;
+
+      var parentCard = document.getElementById('user-card-' + targetUserId);
+      if (parentCard) {
+        var btns = parentCard.querySelectorAll('button');
+        for (var b = 0; b < btns.length; b++) btns[b].disabled = true;
+      }
+      if (btnEl) btnEl.textContent = '⏳ 處理中...';
 
       setStatus('⏳ 正在更新同仁權限...', '');
 
@@ -1167,6 +1198,11 @@
       })
       .catch(function(err) {
         setStatus('❌ 操作失敗: ' + err.message, 'error');
+        if (parentCard) {
+          var btns = parentCard.querySelectorAll('button');
+          for (var b = 0; b < btns.length; b++) btns[b].disabled = false;
+        }
+        if (btnEl) btnEl.textContent = newStatus === 'APPROVED' ? '✅ 批准' : '❌ 拒絕';
       });
     }
 
