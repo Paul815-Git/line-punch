@@ -705,6 +705,25 @@
         });
     }
 
+    function formatCleanTime(timeStr) {
+      if (!timeStr) return '';
+      // Handle JS Date toString format if present
+      if (timeStr.indexOf('GMT') !== -1 || timeStr.indexOf('(') !== -1) {
+        try {
+          var d = new Date(timeStr);
+          if (!isNaN(d.getTime())) {
+            var y = d.getFullYear();
+            var m = String(d.getMonth() + 1).padStart(2, '0');
+            var day = String(d.getDate()).padStart(2, '0');
+            var hh = String(d.getHours()).padStart(2, '0');
+            var mm = String(d.getMinutes()).padStart(2, '0');
+            return y + '-' + m + '-' + day + ' ' + hh + ':' + mm;
+          }
+        } catch(e) {}
+      }
+      return String(timeStr).replace('T', ' ').substring(0, 16);
+    }
+
     function renderMyLeaves() {
       var container = document.getElementById('myLeavesList');
       if (!myLeaves || myLeaves.length === 0) {
@@ -720,12 +739,15 @@
         if (lv.status === '已批准') { statusClass = 'ls-approved'; statusText = '✅ 已批准'; }
         if (lv.status === '已拒絕') { statusClass = 'ls-rejected'; statusText = '❌ 已拒絕'; }
 
+        var cleanStart = formatCleanTime(lv.startTime);
+        var cleanEnd = formatCleanTime(lv.endTime);
+
         html += '<div class="leave-item">' +
           '<div class="leave-item-header">' +
             '<span class="leave-item-type">' + escapeHtml(lv.leaveType) + '</span>' +
             '<span class="leave-status-badge ' + statusClass + '">' + statusText + '</span>' +
           '</div>' +
-          '<div class="leave-item-time">' + escapeHtml(lv.startTime) + ' ～ ' + escapeHtml(lv.endTime) + '</div>' +
+          '<div class="leave-item-time">' + escapeHtml(cleanStart) + ' ～ ' + escapeHtml(cleanEnd) + '</div>' +
           (lv.note ? '<div class="leave-item-note">備註: ' + escapeHtml(lv.note) + '</div>' : '') +
         '</div>';
       }
